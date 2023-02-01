@@ -15,7 +15,7 @@ app.use(express.json()) // parse request body as json and store in req.body
 app.use(cors()) // enable cross origin resource sharing
 app.use(express.urlencoded()) // only parse url encodied req bodies
 
-// mount all routers to app (only todo-items-router exists for this project)
+
 
 app.use(routes)
 
