@@ -35,7 +35,7 @@
   ### How to use
 
     Run: Node listener.js
-    Test: 
+    Test:  npm run test 
 
 
   *Retreive neccesary user details by id*:
