@@ -6,7 +6,7 @@ const { request } = require("../../app.js");
 const {User,Product} = require( '../models/model.js');
 
 function productPostValidation(name,description,sku,manufacturer,quantity){
-    if(!name || !description || !sku || !manufacturer || !quantity || quantity<=0 || typeof quantity === 'string') return false;
+    if(!name || !description || !sku || !manufacturer || !quantity || quantity<=0 || typeof quantity === 'string'|| quantity>100) return false;
     else return true;
     
 }
@@ -171,7 +171,7 @@ const prodPatch = async(request,response)=>{
                 message: "Invalid entry date updated || date added",
               })
         }
-       else if(name===""|| description === "" || sku === "" || manufacturer === "" || quantity === "" || typeof quantity === 'string'|| quantity<0 ){
+       else if(name===""|| description === "" || sku === "" || manufacturer === "" || quantity === "" || typeof quantity === 'string'|| quantity<0 || quantity>100){
             response.status(400).send({
                 message: "Invalid entry",
               })
@@ -345,7 +345,7 @@ const prodPut = async(request,response)=>{
                 message: "Please add all details ",
               });}
 
-       else if(name===""|| description === "" || sku === "" || manufacturer === "" || quantity === "" || typeof quantity === 'string' || quantity <=0 ){
+       else if(name===""|| description === "" || sku === "" || manufacturer === "" || quantity === "" || typeof quantity === 'string' || quantity <=0 || quantity>100 ){
             response.status(400).send({
                 message: "Invalid entry",
               })
