@@ -1,5 +1,6 @@
 const express = require("express");
 const {healthCheck,post,get,update} =require( '../controllers/userdb-controller.js');
+const {prodPost,prodGet,prodPatch,prodDelete,prodPut}=require('../controllers/product-controller.js')
 
 const router = express.Router(); // get router object
 
@@ -15,4 +16,12 @@ router.route('/v1/user')
 router.route('/healthz')
       .get(healthCheck)
 
+router.route('/v1/product')
+      .post(prodPost)
+router.route('/v1/product/:id')
+      .get(prodGet)
+      .patch(prodPatch)
+      .delete(prodDelete)
+      .put(prodPut)
+      
 module.exports=router

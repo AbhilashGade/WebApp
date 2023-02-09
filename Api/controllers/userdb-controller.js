@@ -1,6 +1,6 @@
 const base64 = require("base-64")
 const bcrypt = require("bcryptjs") 
-const User = require( '../models/model.js');
+const {User,Product} = require( '../models/model.js');
 const {validInputsForUpdate, validInputsForCreate}= require('../utils/validations.js')
 const post = async (request,response)=>{
     
@@ -53,7 +53,12 @@ const post = async (request,response)=>{
     
        const id = Number(request.params.id);
        console.log(id)
-
+      if (!request.headers.authorization){
+        response.status(400).send({
+          message:"No Auth",
+      });
+      }
+      else{
        const encodedToken = request.headers.authorization.split(" ")[1];
     
        const baseToAlpha = base64.decode(encodedToken).split(":");
@@ -67,13 +72,13 @@ const post = async (request,response)=>{
 
      User.findOne({
         where:{
-            id:id,
+            username:decodedUsername,
         },
      })
      .then(async (user)=>{
         if(user){
             const valid=await bcrypt.compare(decodedPassword,user.getDataValue("password"))
-            if (decodedUsername === user.getDataValue("username") && valid ===true)
+            if (id === user.getDataValue("id") && valid ===true)
                 {
                     //200
                     response.status(200).send({
@@ -85,7 +90,7 @@ const post = async (request,response)=>{
                       account_updated: user.getDataValue("updatedAt"),
                     });
                   }
-            else if (decodedUsername !== user.getDataValue("username")){
+            else if (id !== user.getDataValue("id")){
                 response.status(403).send({
                     message:"Forbidden Access or not registered",
                 });
@@ -113,7 +118,7 @@ const post = async (request,response)=>{
         }
      })
      
- }
+ }}
 
         
  
@@ -122,7 +127,11 @@ const update = async (request,response)=>{
 
         
         const id = Number(request.params.id);
-        
+        if (!request.headers.authorization){
+          response.status(400).send({
+            message:"No Auth",
+        });}
+        else {
  
         const encodedToken = request.headers.authorization.split(" ")[1];
         const { username,first_name,last_name,account_created, account_updated,password } = request.body;
@@ -137,22 +146,22 @@ const update = async (request,response)=>{
       message:
         "Bad Request. Cannot update username / account_created / account_updated",
     });}
-    else if(validInputsForUpdate(id, password, first_name, last_name)===false){
-        response.status(400).send({ message: "Bad Request. Invalid Inputs" });
+    // else if(validInputsForUpdate(id, password, first_name, last_name)===false){
+    //     response.status(400).send({ message: "Bad Request. Invalid Inputs" });
 
-    }
+    // }
     else {
         User.findOne({
             where: {
-              id: id,
+              username: decodedUsername,
             },
           }).then(async (user) =>{ if (user){
     
-
+    const pwd= !password ? user.getDataValue("password") : password
      const valid = await bcrypt.compare(decodedPassword,user.getDataValue("password")) 
-     if(valid===true && decodedUsername === user.getDataValue("username")){
+     if(valid===true && id === user.getDataValue("id")){
         const salt = await bcrypt.genSalt(10);
-        let hash = await bcrypt.hash(password, salt);
+        let hash = await bcrypt.hash(pwd, salt);
         User.update(
             {
               password: hash,
@@ -178,14 +187,18 @@ const update = async (request,response)=>{
           
         
 
-     }    else if(valid===false || decodedUsername !== user.getDataValue("username")){
+     }    
+     else if(id!==user.getDataValue("id")){
+      response.status(403).send({message:"Forbidden Error"})
+     }
+     else if(valid===false || decodedUsername !== user.getDataValue("username")){
             response.status(401).send({message:"User Authentication failed"})
         
      }
 
     
 }
-    })}}
+    })}}}
 
  const healthCheck = async (request,response)=>{
     try{
