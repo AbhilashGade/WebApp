@@ -70,53 +70,55 @@ const post = async (request,response)=>{
         response.status(400).send({message:"invalid Id"})
      }
 
-     User.findOne({
-        where:{
-            username:decodedUsername,
-        },
-     })
-     .then(async (user)=>{
-        if(user){
-            const valid=await bcrypt.compare(decodedPassword,user.getDataValue("password"))
-            if (id === user.getDataValue("id") && valid ===true)
-                {
-                    //200
-                    response.status(200).send({
-                      id: user.getDataValue("id"),
-                      first_name: user.getDataValue("first_name"),
-                      last_name: user.getDataValue("last_name"),
-                      username: user.getDataValue("username"),
-                      account_created: user.getDataValue("createdAt"),
-                      account_updated: user.getDataValue("updatedAt"),
-                    });
-                  }
-            else if (id !== user.getDataValue("id")){
-                response.status(403).send({
-                    message:"Forbidden Access or not registered",
-                });
+  else{
+    User.findOne({
+      where:{
+          username:decodedUsername,
+      },
+   })
+   .then(async (user)=>{
+      if(user){
+          const valid=await bcrypt.compare(decodedPassword,user.getDataValue("password"))
+          if (id === user.getDataValue("id") && valid ===true)
+              {
+                  //200
+                  response.status(200).send({
+                    id: user.getDataValue("id"),
+                    first_name: user.getDataValue("first_name"),
+                    last_name: user.getDataValue("last_name"),
+                    username: user.getDataValue("username"),
+                    account_created: user.getDataValue("createdAt"),
+                    account_updated: user.getDataValue("updatedAt"),
+                  });
                 }
-            else if (valid===false){
-                try{
+          else if (id !== user.getDataValue("id")){
+              response.status(403).send({
+                  message:"Forbidden Access or not registered",
+              });
+              }
+          else if (valid===false){
+              try{
 
-                response.status(401).send({
-                    message:"invalid Password"
-                })}
-                catch{response.status(400).send({
-                    message:"Bad Request"
-                })}
-            }
-            else
-            { try{
-                response.status(400).send({
-                    message:" 400. User Does not exist"
-                })}
-                catch{response.status(400).send({
-                    message:" invalid input"
-                })}
-            }
-          
-        }
-     })
+              response.status(401).send({
+                  message:"invalid Password"
+              })}
+              catch{response.status(400).send({
+                  message:"Bad Request"
+              })}
+          }
+          else
+          { try{
+              response.status(400).send({
+                  message:" 400. User Does not exist"
+              })}
+              catch{response.status(400).send({
+                  message:" invalid input"
+              })}
+          }
+        
+      }
+   })
+  }
      
  }}
 
