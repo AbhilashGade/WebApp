@@ -158,8 +158,9 @@ const update = async (request,response)=>{
               username: decodedUsername,
             },
           }).then(async (user) =>{ if (user){
-    
-    const pwd= !password ? user.getDataValue("password") : password
+  
+    const pwd= !password ? decodedPassword : password
+    console.log("🦅",pwd)
      const valid = await bcrypt.compare(decodedPassword,user.getDataValue("password")) 
      if(valid===true && id === user.getDataValue("id")){
         const salt = await bcrypt.genSalt(10);
