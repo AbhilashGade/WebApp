@@ -1,5 +1,5 @@
 function validInputsForUpdate(userId, password, first_name, last_name) {
-    if (userId==="" || passwor || !first_name || !last_name) return false;
+    if (userId==="" || !password || !first_name || !last_name) return false;
     return true;
   }
   
