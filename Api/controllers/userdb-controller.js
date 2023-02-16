@@ -200,6 +200,8 @@ const update = async (request,response)=>{
      }
 
     
+} else{
+  response.status(401).send({message:"User Authentication failed"})
 }
     })}}}
 
