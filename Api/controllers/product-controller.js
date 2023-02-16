@@ -236,6 +236,10 @@ const prodPatch = async(request,response)=>{
 
             }}
         )
+        .catch(() => {
+            response.status(401).send({
+              message: "Bad Request. Incorrect password",
+            });
    }}
     
 }
@@ -410,6 +414,10 @@ const prodPut = async(request,response)=>{
 
             }}
         )
+        .catch(() => {
+            response.status(401).send({
+              message: "Bad Request. Incorrect password",
+            });
    }}
     
 }
