@@ -2,7 +2,7 @@ name: buildami
 on:
   workflow_dispatch:
   push:
-    branches: [awsec2]
+    branches: [main]
 
 jobs:
   build-ami:
