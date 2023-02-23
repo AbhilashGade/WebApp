@@ -1,7 +1,7 @@
-name: app-action
+name: Test
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches: [main]
 
 jobs:
@@ -25,4 +25,4 @@ jobs:
         with:
           version: "1.8.3" # or `latest`
       - name: Validate Packer template
-        run: packer validate -var-file "variables.auto.pkvars.hcl" .
+        run: packer validate -var-file="variables.auto.pkvars.hcl" 
