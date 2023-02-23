@@ -2,7 +2,7 @@ name: app-action
 on:
   workflow_dispatch:
   push:
-    branches: [awsec2]
+    branches: [main]
 
 jobs:
   build:
@@ -25,4 +25,4 @@ jobs:
         with:
           version: "1.8.3" # or `latest`
       - name: Validate Packer template
-        run: packer validate ./variables.auto.pkvars.hcl
+        run: packer validate -var-file "variables.auto.pkvars.hcl" .
