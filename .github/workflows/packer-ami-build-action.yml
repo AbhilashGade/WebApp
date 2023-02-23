@@ -2,6 +2,8 @@ name: buildami
 on:
   workflow_dispatch:
   push:
+
+  
     branches: [main]
 
 jobs:
