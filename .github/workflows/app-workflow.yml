@@ -19,3 +19,16 @@ jobs:
       - run: npm --version 
       - run: npm install
       - run: npm test
+
+      - name: Setup `packer`
+        uses: hashicorp/setup-packer@main
+        id: setup
+        with:
+          version: "1.8.3"
+      - name: Run `packer init`
+        id: init
+        run: "packer init ./packer-file.pkr.hcl"
+
+      - name: Run `packer validate`
+        id: validate
+        run: "packer validate ./packer-file.pkr.hcl"
