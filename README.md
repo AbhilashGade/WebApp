@@ -108,7 +108,7 @@
 
   ## Added workflow changes
 
-  * Creates an `AMI` when merging the PR into the main repo with shell scrip as the provisioners
+  * Creates an `AMI` when merging the PR into the main repo with shell scrip as the provisioners.
   
 
 
