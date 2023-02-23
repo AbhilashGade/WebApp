@@ -23,4 +23,4 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       - name: Run Packer
-        run: packer build -var-file="variables.auto.pkvars.hcl" 
+        run: packer build -var-file="variables.auto.pkvars.hcl" .
