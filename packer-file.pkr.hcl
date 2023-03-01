@@ -1,6 +1,6 @@
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
-
+}
 
 source "amazon-ebs" "amazon-linux-2" {
   ami_name      = "${var.ami_name}-${local.timestamp}"
