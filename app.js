@@ -3,7 +3,8 @@ const {sequelize}=require('./Api/models/model.js')
 const morgan = require("morgan")
 // make app an express object
 // if(process.env.NODE_ENV === "dev") {
-    sequelize.sync().then(() => console.log("Syncing DB")).catch(() => console.log("Syncing Failed"))
+console.log(process.env)    
+sequelize.sync().then(() => console.log("Syncing DB")).catch((err) => console.log(err,"Syncing Failed"))
 // }
 
 const app=express()
