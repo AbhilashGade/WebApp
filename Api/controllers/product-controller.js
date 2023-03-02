@@ -2,7 +2,6 @@ const base64 = require("base-64")
 const bcrypt = require("bcryptjs"); 
 const AWS = require("aws-sdk")
 const multer = require("multer")
-const multerS3 = require("multer-s3")
 const { v4: uuidv4 } = require('uuid');
 
 const {User,Product,Image} = require( '../models/model.js');
