@@ -1,9 +1,11 @@
 const base64 = require("base-64")
 const bcrypt = require("bcryptjs"); 
-const { response } = require("express");
-const { where } = require("sequelize");
-const { request } = require("../../app.js");
-const {User,Product} = require( '../models/model.js');
+const AWS = require("aws-sdk")
+const multer = require("multer")
+const multerS3 = require("multer-s3")
+const { v4: uuidv4 } = require('uuid');
+
+const {User,Product,Image} = require( '../models/model.js');
 
 function productPostValidation(name,description,sku,manufacturer,quantity){
     if(!name || !description || !sku || !manufacturer || !quantity || quantity<=0 || typeof quantity === 'string'|| quantity>100) return false;
@@ -425,5 +427,352 @@ const prodPut = async(request,response)=>{
    }}
     
 }
+const s3 = new AWS.S3({
+  // accessKeyId: 'AKIA3EFUIO4NLYYK34NL',
+  // secretAccessKey: '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'
+  region:process.env.AWS_REGION
+});
 
-module.exports = {prodPost,prodGet,prodPatch,prodDelete,prodPut}
+const storage = multer.memoryStorage({
+  destination: function (req, file, callback) {
+    callback(null, '');
+  },
+});
+
+const upload = multer({ storage }).single('image');
+
+const imageUpload = (req, res) => {
+  const id = Number(req.params.prodId);
+  if (!req.headers.authorization) {
+    res.status(400).send({
+      message: 'No Auth',
+    });
+  } else if (!id || typeof id === 'string') {
+    // handle invalid id
+  } else {
+    const encodedToken = req.headers.authorization.split(' ')[1];
+    const baseToAlpha = base64.decode(encodedToken).split(':');
+    let decodedUsername = baseToAlpha[0];
+    let decodedPassword = baseToAlpha[1];
+    
+    Product.findOne({
+      where: {
+        id: id,
+      },
+    }).then(async (product) => {
+      User.findOne({
+        where: {
+          id: product.getDataValue('owner_user_id'),
+        },
+      }).then(async (user) => {
+        const valid = await bcrypt.compare(
+          decodedPassword,
+          user.getDataValue('password')
+        );
+        const existinguser = await User.findOne({ where: {
+          username: decodedUsername,
+        },
+
+        });
+        if (valid && user.getDataValue('username') === decodedUsername) {
+          upload(req, res, function (err) {
+            if (err) {
+              return res.status(400).json({ message: err.message });
+            }
+
+            // Image was successfully uploaded to memory buffer
+            const imageData = req.file.buffer;
+            const imageName = `${uuidv4()}-${req.file.originalname}`;
+            const fileTypes = /jpeg|jpg|png/;
+            if(!fileTypes.test(imageName.toLowerCase()))
+            {return res.status(401).json({ message: 'Invalid input' });}
+            const bucketName = process.env.AWS_BUCKET_NAME;
+            
+            // Upload the image to S3
+            const params = {
+              Bucket: bucketName,
+              Key: imageName,
+              Body: imageData,
+              ContentType: req.file.mimetype,
+            };
+            s3.upload(params, (err, data) => {
+              if (err) {
+                return res.status(400).json({ message: err.message });
+              }
+
+              // Image was successfully uploaded to S3
+              const imageUrl = data.Location;
+              
+              // Get the metadata for the uploaded image
+              const params = {
+                Bucket: bucketName,
+                Key: imageName,
+              };
+              s3.headObject(params, function (err, metadata) {
+                
+                if (err) {
+                  return res.status(400).json({ message: err.message });
+                }
+                Image.create({
+                        
+                  product_id: id,
+                  file_name:imageName,
+                  s3_bucket_path:imageUrl,
+                  createdAt: new Date(),
+
+
+              
+          })
+          .then((feedback)=>{
+             
+                  res.status(201).send({
+                      
+                      product_id: feedback.getDataValue("product_id"),
+                      file_name: feedback.getDataValue("file_name"),
+                      s3_bucket_path: feedback.getDataValue("s3_bucket_path"),
+                      
+                      date_added:feedback.getDataValue("createdAt"),
+                      
+                    });
+              
+              
+          })
+                
+
+                // Return metadata along with the image URL
+
+                
+              });
+            });
+          });
+        }
+        
+        else if(existinguser){
+          
+          res.status(403).send({
+            message: 'forbidden',
+          });
+        }
+        else{
+          res.status(401).send({
+            message: 'Bad Request. Incorrect id',
+          });
+        }
+        
+        
+      })
+      .catch(()=> {
+        res.status(401).send({
+          message: 'Bad Request. Incorrect id',
+        });
+      });
+       
+    }).catch(() => {
+      res.status(401).send({
+        message: 'Bad Request. Incorrect id',
+      });
+    });
+  }
+};
+
+const deleteImage = (req, res) => {
+  const id = Number(req.params.imageId);
+  const productID = Number(req.params.prodId);
+  if (!req.headers.authorization) {
+    res.status(400).send({
+      message: 'No Auth',
+    });
+  } else if (!id || typeof id === 'string') {
+    res.status(400).send({
+      message: 'Bad Request. Incorrect id1',
+    });
+  } else {
+    const encodedToken = req.headers.authorization.split(' ')[1];
+    const baseToAlpha = base64.decode(encodedToken).split(':');
+    let decodedUsername = baseToAlpha[0];
+    let decodedPassword = baseToAlpha[1];
+
+    Image.findOne({
+      where: {
+        id: id,
+      },
+    })
+      .then(async (image) => {
+        Product.findOne({
+          where: {
+            id: image.getDataValue('product_id'),
+          },
+        })
+          .then(async (product) => {
+            User.findOne({
+              where: {
+                id: product.getDataValue('owner_user_id'),
+              },
+            })
+            .then(async (user)=>{
+              if(product.getDataValue('id')!==productID){
+                return res.status(400).json({ message: 'Bad Request. Incorrect product id' })
+              }
+            if (!product) {
+              console.log(product)
+              return res.status(400).json({ message: 'Bad Request. Incorrect product id' });
+            } else {
+              const valid = await bcrypt.compare(decodedPassword, user.getDataValue('password') );
+              if (valid === true && decodedUsername === user.getDataValue('username')) {
+                const bucketName = process.env.AWS_BUCKET_NAME;
+                const params = {
+                  Bucket: bucketName,
+                  Key: image.getDataValue('file_name'),
+                };
+                s3.deleteObject(params, function (err, data) {
+                  if (err) {
+                    return res.status(400).json({ message: err.message });
+                  }
+                  Image.destroy({
+                    where: {
+                      id: id,
+                    },
+                  })
+                    .then(() => {
+                      return res.status(200).json({ message: 'Image deleted successfully' });
+                    })
+                    .catch(() => {
+                      return res.status(500).json({ message: 'Internal S3 Error' });
+                    });
+                });
+              } else {
+                return res.status(403).json({ message: 'Forbidden' });
+              }
+            }
+          })
+          })
+          .catch(() => {
+            return res.status(400).json({ message: 'Bad Request. Incorrect product id' });
+          });
+      })
+      .catch(() => {
+        return res.status(404).json({ message: 'Bad Request. Incorrect image id' });
+      });
+  }
+};
+
+const getImage = (req, res) => {
+  const id = Number(req.params.imageId);
+  const productID = Number(req.params.prodId)
+  if (!req.headers.authorization) {
+    res.status(400).send({
+      message: 'No Auth',
+    });
+  } else if (!id || typeof id === 'string') {
+    res.status(400).send({
+      message: 'Bad Request. Incorrect id',
+    });
+  } else {
+    const encodedToken = req.headers.authorization.split(' ')[1];
+    const baseToAlpha = base64.decode(encodedToken).split(':');
+    let decodedUsername = baseToAlpha[0];
+    let decodedPassword = baseToAlpha[1];
+
+    Image.findOne({
+      where: {
+        id: id,
+      },
+    })
+      .then(async (image) => {
+        Product.findOne({
+          where: {
+            id: image.getDataValue('product_id'),
+          },
+        })
+          .then(async (product) => {
+            if(product.getDataValue('id')!==productID){
+              return res.status(400).json({ message: 'Bad Request. Incorrect product id' })
+            }
+            User.findOne({
+              where: {
+                id: product.getDataValue('owner_user_id'),
+              },
+            })
+            .then(async (user)=>{
+            if (!product) {
+              console.log(product)
+              return res.status(400).json({ message: 'Bad Request. Incorrect product id' });
+            } else {
+              const valid = await bcrypt.compare(decodedPassword, user.getDataValue('password') );
+              if (valid === true && decodedUsername === user.getDataValue('username')) {
+                return res.status(200).json({
+                  id: image.getDataValue('id'),
+                  product_id: image.getDataValue('product_id'),
+                  file_name: image.getDataValue('file_name'),
+                  created_at: image.getDataValue('createdAt'),
+                  updated_at: image.getDataValue('updatedAt'),
+                });
+              } else {
+                return res.status(403).json({ message: 'Forbidden' });
+              }
+            }
+          })
+          })
+          .catch(() => {
+            return res.status(400).json({ message: 'Bad Request. Incorrect product id' });
+          });
+      })
+      .catch(() => {
+        return res.status(400).json({ message: 'Bad Request. Incorrect image id' });
+      });
+  }
+};
+
+
+const getImagesByProductId = (req, res) => {
+  const productId = Number(req.params.prodId);
+
+  if (!req.headers.authorization) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const token = req.headers.authorization.split(' ')[1];
+  const [username, password] = Buffer.from(token, 'base64').toString().split(':');
+
+  User.findOne({ where: { username } })
+    .then(async (user) => {
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const validPassword = await bcrypt.compare(password, user.password);
+      if (!validPassword) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      Product.findByPk(productId).then((product) => {
+        if (!product) {
+          return res.status(404).json({ message: 'Product not found' });
+        }
+        else if(product.getDataValue('owner_user_id')!==user.getDataValue('id')){
+          return res.status(403).json({ message: 'Forbidden' });
+        }
+
+        Image.findAll({ where: { product_id: productId } })
+          .then((images) => {
+            return res.status(200).json({ images });
+          })
+          .catch((error) => {
+            console.log(error);
+            return res.status(500).json({ message: 'Internal Server Error' });
+          });
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      return res.status(500).json({ message: 'Internal Server Error' });
+    });
+
+    
+};
+
+
+
+module.exports = {prodPost,prodGet,prodPatch,prodDelete,prodPut,imageUpload,deleteImage,getImage,getImagesByProductId}
+
+
