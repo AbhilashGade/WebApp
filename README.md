@@ -1,6 +1,6 @@
 # Assignment AbhilashGade Network Structures and Cloud computing
 
-
+aas
 ## Goal
 <span style="background-color: #FFFF00">The main goal of this assignment is to build a APIs for an User to register and retreive his details using Node.js</span>
 
@@ -8,15 +8,19 @@
 
 ## Features
 * As a developer, I am able to create new account by providing the following fields as an input
+sassdas
+
     * Email Address
     * Password
     * First Name
     * Last Name
 * As a developer, I am able to get a particular user after the user has entered his credentials by      implementing basic auth
-* As a developer, I am able to edit a particular user after the user has entered his credentials by      implementing basic auth
+* As a developer, I am able to edit a particular user after the user has entered his credentials by     
 
 
 ## Requirements
+
+
 * Node.js
   * express.js
 * Sequelize
