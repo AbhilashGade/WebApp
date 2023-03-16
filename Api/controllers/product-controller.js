@@ -805,25 +805,28 @@ const prodDelete1 = async (request, response) => {
                 });
               } else {
                 // Delete all images belonging to the product
-                Image.findAll({
-                  where: {
-                    product_id: id,
-                  },
-                }).then(async (images) => {
-                  const imageKeys = images.map((image) => ({
-                    Key: image.getDataValue('key'),
-                  }));
-                  await s3
-                    .deleteObjects({
-                      Bucket: process.env.AWS_BUCKET_NAME,
-                      Delete: { Objects: imageKeys },
-                    })
-                    
-                  await Image.destroy({
-                    where: {
-                      product_id: id,
-                    },
-                  });
+              Image.findAll({
+              where: {
+                product_id: id,
+              },
+            }).then(async (images) => {
+              const imageKeys = images.map((image) => ({
+                Key: image.getDataValue('key'),
+              }));
+              console.log('Image keys:', imageKeys); // Add this line to log the image keys
+              await s3
+                .deleteObjects({
+                  Bucket: process.env.AWS_BUCKET_NAME,
+                  Delete: { Objects: imageKeys },
+                })
+                .promise()
+                .then((data) => {
+                  console.log('Deleted objects:', data); // Add this line to log the response from S3
+                })
+                .catch((err) => {
+                  console.log('Error deleting objects:', err); // Add this line to log any errors
+                });
+           
                   await Product.destroy({
                     where: {
                       id: id,
@@ -858,5 +861,3 @@ const prodDelete1 = async (request, response) => {
 
 
 module.exports = {prodPost,prodGet,prodPatch,prodDelete1,prodPut,imageUpload,deleteImage,getImage,getImagesByProductId}
-
-
