@@ -116,6 +116,14 @@ sassdas
   * Creates an `AMI` when merging the PR into the main repo with shell scrip as the provisioners.
   
 
+   ## Added Image Create Read and Delete operations:
+   
+     * image_id	
+     * product_id	
+     * file_name	
+     * date_created	
+     * s3_bucket_path	
+ 
 
 
 
