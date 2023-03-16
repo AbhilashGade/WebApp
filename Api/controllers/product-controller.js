@@ -771,6 +771,7 @@ const getImagesByProductId = (req, res) => {
 };
 
 
+
 const prodDelete = async (request, response) => {
   const id = Number(request.params.id);
   console.log(id);
