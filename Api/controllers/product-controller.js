@@ -826,7 +826,7 @@ const prodDelete1 = async (request, response) => {
                 .catch((err) => {
                   console.log('Error deleting objects:', err); // Add this line to log any errors
                 });
-            });
+           
                   await Product.destroy({
                     where: {
                       id: id,
@@ -861,5 +861,3 @@ const prodDelete1 = async (request, response) => {
 
 
 module.exports = {prodPost,prodGet,prodPatch,prodDelete1,prodPut,imageUpload,deleteImage,getImage,getImagesByProductId}
-
-
