@@ -244,81 +244,81 @@ const prodPatch = async(request,response)=>{
    }}
     
 }
-const prodDelete= async(request,response)=>
-{
-    const id = Number(request.params.id);
-    console.log(id)
-   if (!request.headers.authorization){
-     response.status(400).send({
-       message:"No Auth",
-   });
-   }
+// const prodDelete= async(request,response)=>
+// {
+//     const id = Number(request.params.id);
+//     console.log(id)
+//    if (!request.headers.authorization){
+//      response.status(400).send({
+//        message:"No Auth",
+//    });
+//    }
 
-   else if(!id || typeof id === "string"){
-    response.status(400).send({message:"invalid Id"})
-   }
+//    else if(!id || typeof id === "string"){
+//     response.status(400).send({message:"invalid Id"})
+//    }
 
-   else{
-        const encodedToken = request.headers.authorization.split(" ")[1];
-        const baseToAlpha = base64.decode(encodedToken).split(":");
-        let decodedUsername = baseToAlpha[0];
-        let decodedPassword = baseToAlpha[1];
-        User.findOne({
-            where: {
-              username: decodedUsername,
-            },
-          })
-          .then(async (user)=>{
-            const valid = await bcrypt.compare(decodedPassword,user.getDataValue("password")) 
-           if(valid===true && decodedUsername === user.getDataValue("username")){
-            Product.findOne({
-                where:{
-                    id:id,
-                },
-            })
-            .then(async (product)=>{
-                if (product.getDataValue("owner_user_id")!== user.getDataValue("id")){
-                    response.status(403).send({
-                        message: "Unauthorized access",
-                      })}
-                else{
-                    Product.destroy({
-                        where:{
-                        id:id,
-                    },
-                })
-                .then((val)=>{
-                    if(val){
-                        response.status(204).send({})
-                    }
-                })
-                }
+//    else{
+//         const encodedToken = request.headers.authorization.split(" ")[1];
+//         const baseToAlpha = base64.decode(encodedToken).split(":");
+//         let decodedUsername = baseToAlpha[0];
+//         let decodedPassword = baseToAlpha[1];
+//         User.findOne({
+//             where: {
+//               username: decodedUsername,
+//             },
+//           })
+//           .then(async (user)=>{
+//             const valid = await bcrypt.compare(decodedPassword,user.getDataValue("password")) 
+//            if(valid===true && decodedUsername === user.getDataValue("username")){
+//             Product.findOne({
+//                 where:{
+//                     id:id,
+//                 },
+//             })
+//             .then(async (product)=>{
+//                 if (product.getDataValue("owner_user_id")!== user.getDataValue("id")){
+//                     response.status(403).send({
+//                         message: "Unauthorized access",
+//                       })}
+//                 else{
+//                     Product.destroy({
+//                         where:{
+//                         id:id,
+//                     },
+//                 })
+//                 .then((val)=>{
+//                     if(val){
+//                         response.status(204).send({})
+//                     }
+//                 })
+//                 }
                 
 
 
-            })
-            .catch((val)=>{
-                console.log(val)
-                response.status(404).send({
-                    message: "Product Not available",
-                  })
-            })
-        }
-        else{
-            response.status(401).send({
-                message: "Wrong credentials",
-              })   
-        }
-    })
-    .catch(()=>{
-        response.status(400).send({
-            message: "Bad Request",
-          })
-    })
+//             })
+//             .catch((val)=>{
+//                 console.log(val)
+//                 response.status(404).send({
+//                     message: "Product Not available",
+//                   })
+//             })
+//         }
+//         else{
+//             response.status(401).send({
+//                 message: "Wrong credentials",
+//               })   
+//         }
+//     })
+//     .catch(()=>{
+//         response.status(400).send({
+//             message: "Bad Request",
+//           })
+//     })
 
-}
+// }
 
-}
+// }
 
 
 const prodPut = async(request,response)=>{
@@ -770,6 +770,77 @@ const getImagesByProductId = (req, res) => {
     
 };
 
+const prodDelete = async (request, response) => {
+  const id = Number(request.params.id);
+  console.log(id);
+  if (!request.headers.authorization) {
+    response.status(400).send({
+      message: 'No Auth',
+    });
+  } else if (!id || typeof id === 'string') {
+    response.status(400).send({ message: 'Invalid Id' });
+  } else {
+    const encodedToken = request.headers.authorization.split(' ')[1];
+    const baseToAlpha = base64.decode(encodedToken).split(':');
+    let decodedUsername = baseToAlpha[0];
+    let decodedPassword = baseToAlpha[1];
+    User.findOne({
+      where: {
+        username: decodedUsername,
+      },
+    })
+      .then(async (user) => {
+        const valid = await bcrypt.compare(decodedPassword, user.getDataValue('password'));
+        if (valid === true && decodedUsername === user.getDataValue('username')) {
+          Product.findOne({
+            where: {
+              id: id,
+            },
+          })
+            .then(async (product) => {
+              if (product.getDataValue('owner_user_id') !== user.getDataValue('id')) {
+                response.status(403).send({
+                  message: 'Unauthorized access',
+                });
+              } else {
+                // Delete all images belonging to the product
+                Image.destroy({
+                  where: {
+                    product_id: id,
+                  },
+                }).then(() => {
+                  Product.destroy({
+                    where: {
+                      id: id,
+                    },
+                  }).then((val) => {
+                    if (val) {
+                      response.status(204).send({});
+                    }
+                  });
+                })
+                .catch(()=>{response.status(400).send({message:'no images'})})
+              }
+            })
+            .catch((val) => {
+              console.log(val);
+              response.status(404).send({
+                message: 'Product Not available',
+              });
+            });
+        } else {
+          response.status(401).send({
+            message: 'Wrong credentials',
+          });
+        }
+      })
+      .catch(() => {
+        response.status(400).send({
+          message: 'Bad Request',
+        });
+      });
+  }
+};
 
 
 module.exports = {prodPost,prodGet,prodPatch,prodDelete,prodPut,imageUpload,deleteImage,getImage,getImagesByProductId}
