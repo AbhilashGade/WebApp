@@ -1,7 +1,6 @@
 # Assignment AbhilashGade Network Structures and Cloud computing
 
 
-sdasdsa
 
 ## Goal
 <span style="background-color: #FFFF00">The main goal of this assignment is to build a APIs for an User to register and retreive his details using Node.js</span>
