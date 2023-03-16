@@ -770,6 +770,7 @@ const getImagesByProductId = (req, res) => {
     
 };
 
+
 const prodDelete = async (request, response) => {
   const id = Number(request.params.id);
   console.log(id);
@@ -804,12 +805,26 @@ const prodDelete = async (request, response) => {
                 });
               } else {
                 // Delete all images belonging to the product
-                Image.destroy({
+                Image.findAll({
                   where: {
                     product_id: id,
                   },
-                }).then(() => {
-                  Product.destroy({
+                }).then(async (images) => {
+                  const gitimageKeys = images.map((image) => ({
+                    Key: image.getDataValue('key'),
+                  }));
+                  await s3
+                    .deleteObjects({
+                      Bucket: process.env.AWS_BUCKET_NAME,
+                      Delete: { Objects: imageKeys },
+                    })
+                    .promise();
+                  await Image.destroy({
+                    where: {
+                      product_id: id,
+                    },
+                  });
+                  await Product.destroy({
                     where: {
                       id: id,
                     },
@@ -818,8 +833,7 @@ const prodDelete = async (request, response) => {
                       response.status(204).send({});
                     }
                   });
-                })
-                .catch(()=>{response.status(400).send({message:'no images'})})
+                });
               }
             })
             .catch((val) => {
