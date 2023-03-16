@@ -818,7 +818,7 @@ const prodDelete = async (request, response) => {
                       Bucket: process.env.AWS_BUCKET_NAME,
                       Delete: { Objects: imageKeys },
                     })
-                    .promise();
+                    .promise()
                   await Image.destroy({
                     where: {
                       product_id: id,
