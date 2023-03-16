@@ -811,7 +811,7 @@ const prodDelete1 = async (request, response) => {
               },
             }).then(async (images) => {
               const imageKeys = images.map((image) => ({
-                Key: image.getDataValue('id'),
+                Key: image.getDataValue('file_name'),
               }));
               console.log('Image keys:', imageKeys); // Add this line to log the image keys
               await s3
