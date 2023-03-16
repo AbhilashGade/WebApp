@@ -1,6 +1,6 @@
 const express = require("express");
 const {healthCheck,post,get,update} =require( '../controllers/userdb-controller.js');
-const {prodPost,prodGet,prodPatch,prodDelete,prodPut,imageUpload,deleteImage,getImage,getImagesByProductId}=require('../controllers/product-controller.js')
+const {prodPost,prodGet,prodPatch,prodDelete1,prodPut,imageUpload,deleteImage,getImage,getImagesByProductId}=require('../controllers/product-controller.js')
 
 const router = express.Router(); // get router object
 
@@ -21,7 +21,7 @@ router.route('/v1/product')
 router.route('/v1/product/:id')
       .get(prodGet)
       .patch(prodPatch)
-      .delete(prodDelete)
+      .delete(prodDelete1)
       .put(prodPut)
 router.route('/v1/product/:prodId/image')
       .post(imageUpload)
