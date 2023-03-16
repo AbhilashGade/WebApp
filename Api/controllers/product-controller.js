@@ -772,7 +772,7 @@ const getImagesByProductId = (req, res) => {
 
 
 
-const prodDelete = async (request, response) => {
+const prodDelete1 = async (request, response) => {
   const id = Number(request.params.id);
   console.log(id);
   if (!request.headers.authorization) {
@@ -858,6 +858,6 @@ const prodDelete = async (request, response) => {
 };
 
 
-module.exports = {prodPost,prodGet,prodPatch,prodDelete,prodPut,imageUpload,deleteImage,getImage,getImagesByProductId}
+module.exports = {prodPost,prodGet,prodPatch,prodDelete1,prodPut,imageUpload,deleteImage,getImage,getImagesByProductId}
 
 
