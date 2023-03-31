@@ -3,7 +3,8 @@ const bcrypt = require("bcryptjs");
 const AWS = require("aws-sdk")
 const multer = require("multer")
 const { v4: uuidv4 } = require('uuid');
-
+const StatsD = require('hot-shots');
+const statsd = new StatsD({ host: 'localhost', port: 8125 });
 const {User,Product,Image} = require( '../models/model.js');
 
 function productPostValidation(name,description,sku,manufacturer,quantity){
@@ -16,6 +17,7 @@ const prodPost = async (request,response)=>{
     const {name,description,sku,manufacturer,quantity,date_added,date_last_updated,owner_user_id } = request.body;
 
     if (productPostValidation(name,description,sku,manufacturer,quantity)===false){
+      statsd.increment('prodpostinvaliddataerror.calls')
         response.status(400).send({
             message:" product cannot have empty description or less than zero quantity",})
     }
@@ -23,6 +25,7 @@ const prodPost = async (request,response)=>{
         message:" invalid parameters date added or date updated or owner_user_id",}) }
     else{
     if(!request.headers.authorization){
+      statsd.increment('prodpostinvaliddataerror.calls')
         response.status(400).send({
             message:"No Auth",
         });
@@ -41,6 +44,7 @@ const prodPost = async (request,response)=>{
      })
         .then(async(user)=>{
             if(!user){
+              statsd.increment('prodpostinvaliddataerror.calls')
                 response.status(400).send({
                     message: "Invalid User",})
             } else{
@@ -53,6 +57,7 @@ const prodPost = async (request,response)=>{
                 
                   });
                 if (skuCheck.length!==0){
+                  statsd.increment('prodpostinvaliddataerror.calls')
                     response.status(400).send({
                     message: "SKU exists",})}
                 else{
@@ -71,7 +76,7 @@ const prodPost = async (request,response)=>{
                         
                     })
                     .then((feedback)=>{
-                       
+                      statsd.increment('prodpostsuccess.calls')
                             response.status(201).send({
                                 
                                 name: feedback.getDataValue("name"),
@@ -87,12 +92,14 @@ const prodPost = async (request,response)=>{
                         
                     })
                     .catch(() => {
+                      statsd.increment('prodpostinvaliddataerror.calls')
                         response.status(400).send({
                           message: "Bad Request",
                         });
                       });
                 }}
                 else{
+                  statsd.increment('prodpostautherror.calls')
                     response.status(401).send({
                         message: "Incorrect password",})
                 }
@@ -106,6 +113,7 @@ const prodPost = async (request,response)=>{
 const prodGet = async(request,response)=>{ 
     const id = Number(request.params.id)
     if(!id || typeof id === "string"){
+      statsd.increment('prodgettinvaliddataerror.calls')
         response.status(400).send({message:"invalid Id"})
     }
     else
@@ -119,8 +127,9 @@ const prodGet = async(request,response)=>{
         )
         .then((prod)=> {
             if(prod){
+              statsd.increment('prodgetsuccess.calls')
                 response.status(200).send({
-                    
+                  
                         id: prod.getDataValue("id"),
                         name: prod.getDataValue("name"),
                         description: prod.getDataValue("description"),
@@ -134,13 +143,14 @@ const prodGet = async(request,response)=>{
                 })
             }
             else
-            {
+            { statsd.increment('progetdoesnotexist.calls')
                 response.status(404).send({
                     message:"Id does not exist"
                 })
             }
         })
         .catch(()=>{
+          statsd.increment('prodgettinvaliddataerror.calls')
             response.status(400).send({
                 message:"invalid "
             })
@@ -443,6 +453,7 @@ const upload = multer({ storage }).single('image');
 const imageUpload = (req, res) => {
   const id = Number(req.params.prodId);
   if (!req.headers.authorization) {
+    statsd.increment('prodimgfail.calls')
     res.status(400).send({
       message: 'No Auth',
     });
@@ -523,7 +534,7 @@ const imageUpload = (req, res) => {
               
           })
           .then((feedback)=>{
-             
+            statsd.increment('prodimgsuccess.calls')
                   res.status(201).send({
                       
                       product_id: feedback.getDataValue("product_id"),
@@ -633,6 +644,7 @@ const deleteImage = (req, res) => {
                     },
                   })
                     .then(() => {
+                      statsd.increment('prodimgdelete.calls')
                       return res.status(200).json({ message: 'Image deleted successfully' });
                     })
                     .catch(() => {
