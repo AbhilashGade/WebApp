@@ -39,4 +39,9 @@ build {
   provisioner "shell" {
     script = "install-s.sh"
   }
+
+  provisioner "file" {
+    source = "./config.json"
+    destination = "/tmp/config.json"
+  }
 }
