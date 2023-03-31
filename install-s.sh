@@ -8,6 +8,7 @@ sudo amazon-linux-extras install -y epel
 sudo yum install -y curl
 curl -sL https://rpm.nodesource.com/setup_16.x | sudo -E bash -
 sudo yum install -y nodejs
+sudo yum install amazon-cloudwatch-agent -y
 
 
 mkdir webapp
