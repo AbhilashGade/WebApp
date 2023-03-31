@@ -562,13 +562,13 @@ const imageUpload = (req, res) => {
       })
       .catch((err)=> {
         res.status(401).send({
-          message: err,
+          message: 'Bad Request. Incorrect id',
         });
       });
        
     }).catch((err) => {
       res.status(401).send({
-        message: err,
+        message: 'Bad Request. Incorrect id',
       });
     });
   }
