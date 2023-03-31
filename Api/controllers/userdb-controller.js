@@ -2,6 +2,9 @@ const base64 = require("base-64")
 const bcrypt = require("bcryptjs") 
 const {User,Product} = require( '../models/model.js');
 const {validInputsForUpdate, validInputsForCreate}= require('../utils/validations.js')
+const StatsD = require('hot-shots');
+const statsd = new StatsD({ host: 'localhost', port: 8125 });
+
 const post = async (request,response)=>{
     
        const { username, password, first_name, last_name } = request.body;
@@ -9,7 +12,8 @@ const post = async (request,response)=>{
        let hash = await bcrypt.hash(password, salt);
        console.log(validInputsForCreate( username, password, first_name, last_name))
       if(validInputsForCreate( username, password, first_name, last_name)===false)
-      {response
+      {statsd.increment('postinvaliddataerror.calls')
+        response
         .status(400)
         .send({ message: "Oops. Invalid Details" })}
         else{
@@ -26,6 +30,7 @@ const post = async (request,response)=>{
       })
         .then(([feedback, success]) => {
           if (success) {
+            statsd.increment('postsuccess.calls')
             response.status(201).send({
               id: feedback.getDataValue("id"),
               username: feedback.getDataValue("username"),
@@ -35,12 +40,14 @@ const post = async (request,response)=>{
               account_updated: feedback.getDataValue("updatedAt"),
             });
           } else {
+            statsd.increment('postinvaliddataerror.calls')
             response
               .status(400)
               .send({ message: "Oops. Username Already Exists" });
           }
         })
         .catch(() => {
+          statsd.increment('postinvaliddataerror.calls')
           response.status(400).send({
             message: "Bad Request",
           });
@@ -144,6 +151,7 @@ const update = async (request,response)=>{
         
      if (username || account_created || account_updated) {
     //send 400 response for invalid inputs
+    statsd.increment('updateinvaliddataerror.calls')
     response.status(400).send({
       message:
         "Bad Request. Cannot update username / account_created / account_updated",
@@ -192,23 +200,26 @@ const update = async (request,response)=>{
 
      }    
      else if(id!==user.getDataValue("id")){
+      statsd.increment('updateforbiddenerror.calls')
       response.status(403).send({message:"Forbidden Error"})
      }
      else if(valid===false || decodedUsername !== user.getDataValue("username")){
+      statsd.increment('updateautherror.calls')
             response.status(401).send({message:"User Authentication failed"})
         
      }
 
     
-} else{
+} else{statsd.increment('updateautherror.calls')
   response.status(401).send({message:"User Authentication failed"})
 }
     })}}}
 
  const healthCheck = async (request,response)=>{
-    try{
+    try{statsd.increment('health.calls')
         response.status(200).send({ message: "All good" });
     }catch(error){
+        statsd.increment('healthfail.calls')
         response.status(404).send({message:"Resource not available"});
        
     }
