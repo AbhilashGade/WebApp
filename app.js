@@ -1,6 +1,8 @@
 const express=require("express")
 const {sequelize}=require('./Api/models/model.js')
 const morgan = require("morgan")
+const fs = require('fs');
+const path = require('path');
 // make app an express object
 if(process.env.NODE_ENV === "dev") {
 console.log(process.env)    
