@@ -111,7 +111,7 @@ const post = async (request,response)=>{
               try{
                statsd.increment('getAutherror.calls')
               response.status(401).send({
-                    statsd.increment('getAutherror.calls')
+                    
                   message:"invalid Password"
               })}
               catch{
