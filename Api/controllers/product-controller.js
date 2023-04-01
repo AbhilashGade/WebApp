@@ -351,20 +351,17 @@ const prodPut = async(request,response)=>{
         let decodedUsername = baseToAlpha[0];
         let decodedPassword = baseToAlpha[1];
         if (date_added || date_last_updated || owner_user_id){
-            statsd.increment('prodputtinvaliddataerror.calls)
             response.status(400).send({
                 message: "Invalid entry date updated || date added || owner_user_id",
               })
         }
        else if ( !productPostValidation(name,description,sku,manufacturer,quantity)){
-           statsd.increment('prodputtinvaliddataerror.calls)
             response.status(400).send({
                 message: "Please add all details ",
               });}
 
        else if(name===""|| description === "" || sku === "" || manufacturer === "" || quantity === "" || typeof quantity === 'string' || quantity <=0 || quantity>100 ){
-           statsd.increment('prodputtinvaliddataerror.calls)
-           response.status(400).send({
+            response.status(400).send({
                 message: "Invalid entry",
               })
         }
@@ -386,13 +383,11 @@ const prodPut = async(request,response)=>{
             .then(
                 async (product)=>{
                     if (!product){
-                        statsd.increment('prodputunavailableerror.calls)
                         response.status(404).send({
                             message: "Product Not available",
                           })
                     }
                     else if (product.getDataValue("owner_user_id")!== user.getDataValue("id")){
-                        statsd.increment('prodputforbiddenerror.calls)
                         response.status(403).send({
                             message: "Unauthorized access",
                           })}
@@ -409,37 +404,32 @@ const prodPut = async(request,response)=>{
                                 }
                             )
                             .then((result) => {
-                                statsd.increment('prodputSuccess.calls)
                                 response.status(204).send({
                                     });
                               })
                             .catch(() => {
-                                statsd.increment('prodputtinvaliddataerror.calls)
                                 response.status(400).send({
                                   message: "Bad Request. Incorrect inputs for Update",
                                 });
                               })
-                    }else{statsd.increment('prodputtinvaliddataerror.calls)
-                        response.status(400).send({
+                    }else{response.status(400).send({
                         message: "Invalid product Id",
                       });}
                 }
             }
             )
-            .catch(() => {statsd.increment('prodputautherror.calls)
+            .catch(() => {
                 response.status(401).send({
                   message: "Bad Request. Incorrect password",
                 })});
 
-            } else{statsd.increment('prodputautherror.calls)
-                response.status(401).send({
+            } else{response.status(401).send({
                 message: "Invalid Password",
               });
 
             }}
         )
         .catch(() => {
-            statsd.increment('prodputautherror.calls)
             response.status(401).send({
               message: "Bad Request. Incorrect password",
             })});
@@ -599,12 +589,10 @@ const deleteImage = (req, res) => {
   const id = Number(req.params.imageId);
   const productID = Number(req.params.prodId);
   if (!req.headers.authorization) {
-      statsd.increment('imgdeletevalidationerror.calls)
     res.status(400).send({
       message: 'No Auth',
     });
   } else if (!id || typeof id === 'string') {
-      statsd.increment('imgdeletevalidationerror.calls)
     res.status(400).send({
       message: 'Bad Request. Incorrect id1',
     });
@@ -633,12 +621,10 @@ const deleteImage = (req, res) => {
             })
             .then(async (user)=>{
               if(product.getDataValue('id')!==productID){
-                  statsd.increment('imgdeletevalidationerror.calls)
                 return res.status(400).json({ message: 'Bad Request. Incorrect product id' })
               }
             if (!product) {
               console.log(product)
-                statsd.increment('imgdeletevalidationerror.calls)
               return res.status(400).json({ message: 'Bad Request. Incorrect product id' });
             } else {
               const valid = await bcrypt.compare(decodedPassword, user.getDataValue('password') );
@@ -650,7 +636,6 @@ const deleteImage = (req, res) => {
                 };
                 s3.deleteObject(params, function (err, data) {
                   if (err) {
-                      statsd.increment('imgdeletevalidationerror.calls)
                     return res.status(400).json({ message: err.message });
                   }
                   Image.destroy({
@@ -667,19 +652,16 @@ const deleteImage = (req, res) => {
                     });
                 });
               } else {
-                  statsd.increment('imgdeleteForbiddenerror.calls)
                 return res.status(403).json({ message: 'Forbidden' });
               }
             }
           })
           })
           .catch(() => {
-            statsd.increment('imgdeletevalidationerror.calls)
             return res.status(400).json({ message: 'Bad Request. Incorrect product id' });
           });
       })
       .catch(() => {
-        statsd.increment('imgdeletevalidationerror.calls)
         return res.status(404).json({ message: 'Bad Request. Incorrect image id' });
       });
   }
@@ -689,12 +671,10 @@ const getImage = (req, res) => {
   const id = Number(req.params.imageId);
   const productID = Number(req.params.prodId)
   if (!req.headers.authorization) {
-      statsd.increment('imggetvalidationerror.calls)
     res.status(400).send({
       message: 'No Auth',
     });
   } else if (!id || typeof id === 'string') {
-     statsd.increment('imggetvalidationerror.calls)
     res.status(400).send({
       message: 'Bad Request. Incorrect id',
     });
@@ -717,7 +697,6 @@ const getImage = (req, res) => {
         })
           .then(async (product) => {
             if(product.getDataValue('id')!==productID){
-                statsd.increment('imggetvalidationerror.calls)
               return res.status(400).json({ message: 'Bad Request. Incorrect product id' })
             }
             User.findOne({
@@ -728,12 +707,10 @@ const getImage = (req, res) => {
             .then(async (user)=>{
             if (!product) {
               console.log(product)
-                statsd.increment('imggetvalidationerror.calls)
               return res.status(400).json({ message: 'Bad Request. Incorrect product id' });
             } else {
               const valid = await bcrypt.compare(decodedPassword, user.getDataValue('password') );
               if (valid === true && decodedUsername === user.getDataValue('username')) {
-                 statsd.increment('imggetSuccess.calls)
                 return res.status(200).json({
                   id: image.getDataValue('id'),
                   product_id: image.getDataValue('product_id'),
@@ -742,19 +719,16 @@ const getImage = (req, res) => {
                   updated_at: image.getDataValue('updatedAt'),
                 });
               } else {
-                  statsd.increment('imggetForbiddenerror.calls)
                 return res.status(403).json({ message: 'Forbidden' });
               }
             }
           })
           })
           .catch(() => {
-            statsd.increment('imggetvalidationerror.calls)
             return res.status(400).json({ message: 'Bad Request. Incorrect product id' });
           });
       })
       .catch(() => {
-        statsd.increment('imggetvalidationerror.calls)
         return res.status(400).json({ message: 'Bad Request. Incorrect image id' });
       });
   }
@@ -765,7 +739,6 @@ const getImagesByProductId = (req, res) => {
   const productId = Number(req.params.prodId);
 
   if (!req.headers.authorization) {
-     statsd.increment('imggetAutherror.calls)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
@@ -775,19 +748,16 @@ const getImagesByProductId = (req, res) => {
   User.findOne({ where: { username } })
     .then(async (user) => {
       if (!user) {
-          statsd.increment('imggetAutherror.calls)
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
       const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) {
-          statsd.increment('imggetAutherror.calls)
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
       Product.findByPk(productId).then((product) => {
         if (!product) {
-            statsd.increment('imggetUnavailableerror.calls)
           return res.status(404).json({ message: 'Product not found' });
         }
         else if(product.getDataValue('owner_user_id')!==user.getDataValue('id')){
@@ -796,7 +766,6 @@ const getImagesByProductId = (req, res) => {
 
         Image.findAll({ where: { product_id: productId } })
           .then((images) => {
-            statsd.increment('imggetallSuccess.calls)
             return res.status(200).json({ images });
           })
           .catch((error) => {
@@ -818,12 +787,10 @@ const prodDelete1 = async (request, response) => {
   const id = Number(request.params.id);
   console.log(id);
   if (!request.headers.authorization) {
-      statsd.increment('proddeletevalidationerror.calls)
     response.status(400).send({
       message: 'No Auth',
     });
   } else if (!id || typeof id === 'string') {
-      statsd.increment('proddeletevalidationerror.calls)
     response.status(400).send({ message: 'Invalid Id' });
   } else {
     const encodedToken = request.headers.authorization.split(' ')[1];
@@ -845,7 +812,6 @@ const prodDelete1 = async (request, response) => {
           })
             .then(async (product) => {
               if (product.getDataValue('owner_user_id') !== user.getDataValue('id')) {
-                  statsd.increment('proddeleteForbidden.calls)
                 response.status(403).send({
                   message: 'Unauthorized access',
                 });
@@ -879,7 +845,6 @@ const prodDelete1 = async (request, response) => {
                     },
                   }).then((val) => {
                     if (val) {
-                        statsd.increment('proddeletesuccess.calls)
                       response.status(204).send({});
                     }
                   });
@@ -888,20 +853,17 @@ const prodDelete1 = async (request, response) => {
             })
             .catch((val) => {
               console.log(val);
-              statsd.increment('proddeleteunavailable.calls)
               response.status(404).send({
                 message: 'Product Not available',
               });
             });
         } else {
-            statsd.increment('proddeleteAuthnerror.calls)
           response.status(401).send({
             message: 'Wrong credentials',
           });
         }
       })
       .catch(() => {
-        statsd.increment('proddeletevalidationerror.calls)
         response.status(400).send({
           message: 'Bad Request',
         });
