@@ -61,6 +61,7 @@ const post = async (request,response)=>{
        const id = Number(request.params.id);
        console.log(id)
       if (!request.headers.authorization){
+          statsd.increment('getinvaliddataerror.calls')
         response.status(400).send({
           message:"No Auth",
       });
@@ -74,6 +75,7 @@ const post = async (request,response)=>{
        
     
      if (!id){
+         statsd.increment('getinvaliddataerror.calls')
         response.status(400).send({message:"invalid Id"})
      }
 
@@ -88,6 +90,7 @@ const post = async (request,response)=>{
           const valid=await bcrypt.compare(decodedPassword,user.getDataValue("password"))
           if (id === user.getDataValue("id") && valid ===true)
               {
+                  statsd.increment('getsuccess.calls')
                   //200
                   response.status(200).send({
                     id: user.getDataValue("id"),
@@ -99,26 +102,33 @@ const post = async (request,response)=>{
                   });
                 }
           else if (id !== user.getDataValue("id")){
+              statsd.increment('getForbidden.calls')
               response.status(403).send({
                   message:"Forbidden Access or not registered",
               });
               }
           else if (valid===false){
               try{
-
+               statsd.increment('getAutherror.calls')
               response.status(401).send({
+                    statsd.increment('getAutherror.calls')
                   message:"invalid Password"
               })}
-              catch{response.status(400).send({
+              catch{
+                  statsd.increment('getinvaliddataerror.calls')
+                  response.status(400).send({
                   message:"Bad Request"
               })}
           }
           else
           { try{
+              statsd.increment('getinvaliddataerror.calls')
               response.status(400).send({
                   message:" 400. User Does not exist"
               })}
-              catch{response.status(400).send({
+              catch{
+                  statsd.increment('getinvaliddataerror.calls')
+                  response.status(400).send({
                   message:" invalid input"
               })}
           }
@@ -137,6 +147,7 @@ const update = async (request,response)=>{
         
         const id = Number(request.params.id);
         if (!request.headers.authorization){
+          statsd.increment('updateinvaliddataerror.calls') 
           response.status(400).send({
             message:"No Auth",
         });}
@@ -188,9 +199,11 @@ const update = async (request,response)=>{
               },
             })
             .then((result) => {
+                statsd.increment('updateSuccess.calls') 
                 response.status(204).send({});
               })
             .catch(() => {
+            statsd.increment('updateinvaliddataerror.calls') 
                 response.status(400).send({
                   message: "Bad Request. Incorrect inputs for Update",
                 });
