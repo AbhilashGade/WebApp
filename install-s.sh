@@ -21,3 +21,4 @@ npm install
 mkdir uploads
 cd ..
 sudo chmod 755 webapp
+sudo systemctl enable amazon-cloudwatch-agent.service
