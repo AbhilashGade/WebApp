@@ -24,8 +24,8 @@ jobs:
           aws-region: us-east-1
       - name: Run Packer
         run: packer build -var-file="variables.auto.pkvars.hcl" .
-      - name: Run CD
-        run:
-          #!/bin/bash
+      - name: Update Launch Template
+        if: always() # run even if previous step fails
+        run: |
           chmod +x asg.sh 
           ./asg.sh # run the script
