@@ -15,7 +15,7 @@ router.route('/v1/user')
 
 router.route('/healthz')
       .get(healthCheck)
-router.route('/health')
+router.route('/abhilash')
       .get(healthCheck)
 
 router.route('/v1/product')
